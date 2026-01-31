@@ -1,0 +1,10 @@
+基于之前对 ${code} ${name} 的分析：
+
+行业/赛道：${industry_analysis}
+机构行为：${institution_analysis}
+风险提示：${risk_analysis}
+综合观察：${comprehensive_view}
+
+用户追问：${question}
+
+请简明扼要地回答（200字以内），基于已有分析上下文。必须标注"AI辅助分析，仅供研究参考，不构成投资建议"。

@@ -1,0 +1,16 @@
+基于 ${code} ${name} 的机构持仓数据分析：
+
+北上资金：新进 ${beishang_new}万，增持 ${beishang_increase}万，减持 ${beishang_decrease}万
+公募基金：新进 ${gongmu_new}万，增持 ${gongmu_increase}万，减持 ${gongmu_decrease}万
+外资：新进 ${waizi_new}万，增持 ${waizi_increase}万，减持 ${waizi_decrease}万
+私募：新进 ${simu_new}万，增持 ${simu_increase}万，减持 ${simu_decrease}万
+社保：新进 ${shebao_new}万，增持 ${shebao_increase}万，减持 ${shebao_decrease}万
+养老基金：新进 ${yanglao_new}万，增持 ${yanglao_increase}万，减持 ${yanglao_decrease}万
+
+请从网上搜索该股票的最新机构研报和观点，结合持仓数据分析：
+1. 主流机构的整体态度（看多/看空/中性）
+2. 重点关注的投资逻辑
+3. 机构持仓变化的可能原因
+4. 行业内同类公司的机构配置对比
+
+返回300-500字的分析，包含数据支撑。必须标注"AI辅助分析，仅供研究参考，不构成投资建议"。

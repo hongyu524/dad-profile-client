@@ -1,0 +1,21 @@
+{
+  "name": "aws-backend",
+  "private": true,
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "start": "node src/handler.js",
+    "test:ai": "node test/ai.test.js",
+    "test:bedrock": "node test/bedrock.smoke.js",
+    "dev": "sst dev",
+    "deploy": "sst deploy",
+    "outputs": "sst outputs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.688.0",
+    "@aws-sdk/client-dynamodb": "^3.688.0",
+    "@aws-sdk/lib-dynamodb": "^3.688.0",
+    "crypto": "^1.0.1",
+    "sst": "^2.43.3"
+  }
+}
