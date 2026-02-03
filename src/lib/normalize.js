@@ -1,27 +1,20 @@
 // src/lib/normalize.js
 // Helpers to clean strings and numbers from exported/quoted data
 
-export function cleanStr(v) {
-  if (v === null || v === undefined) return "";
-  let s = String(v);
-
-  // Trim whitespace
-  s = s.trim();
-
-  // Convert escaped quotes \" -> "
+export function cleanText(v) {
+  let s = String(v ?? "").trim();
+  // Convert escaped quotes \"xxx\" -> "xxx"
   s = s.replace(/\\"/g, '"');
-
-  // Strip wrapping quotes repeatedly (handles "\"000001\"" or "'化工'")
-  while (
-    (s.startsWith('"') && s.endsWith('"')) ||
-    (s.startsWith("'") && s.endsWith("'"))
-  ) {
-    s = s.slice(1, -1).trim();
-  }
-
+  // Remove wrapping quotes: "xxx"  'xxx'  “xxx”  ‘xxx’
+  s = s.replace(/^["'“‘]+/, "").replace(/["'”’]+$/, "");
+  s = s.trim();
   // Normalize placeholders to empty
   if (s === '""' || s === "''" || s === "-" || s === "--" || s === "—") return "";
-  return s.trim();
+  return s;
+}
+
+export function cleanStr(v) {
+  return cleanText(v);
 }
 
 export function cleanNum(v) {
@@ -36,6 +29,11 @@ export function cleanNum(v) {
 
   const n = Number(s);
   return Number.isFinite(n) ? n : 0;
+}
+
+export function normalizeIndustry(v) {
+  const s = cleanText(v);
+  return s ? s : "未分类";
 }
 
 export function isValidLabel(v) {

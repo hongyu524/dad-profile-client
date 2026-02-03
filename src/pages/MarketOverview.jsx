@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import IndustryManager from '../components/industry/IndustryManager';
 import { apiClient, getApiClientDiagnostics } from '@/lib/apiClient';
-import { cleanStr, cleanNum, isValidLabel } from '@/lib/normalize';
+import { cleanNum, normalizeIndustry, isValidLabel } from '@/lib/normalize';
 
 export default function MarketOverview() {
   const navigate = useNavigate();
@@ -145,7 +145,7 @@ export default function MarketOverview() {
     
     const totalStocks = stocks.length;
     const industryLabels = stocks
-      .map(s => cleanStr(s.industry_level1 ?? s.industry_74))
+      .map(s => normalizeIndustry(s.industry_level1 ?? s.industry_74))
       .filter(isValidLabel);
     const industryCount = new Set(industryLabels).size;
     const hasUncategorized = stocks.some(s => !isValidLabel(s.industry_level1 ?? s.industry_74));
@@ -168,7 +168,7 @@ export default function MarketOverview() {
     
     const stats = {};
     stocks.forEach(stock => {
-      const label = cleanStr(stock.industry_level1 ?? stock.industry_74);
+      const label = normalizeIndustry(stock.industry_level1 ?? stock.industry_74);
       const industry = isValidLabel(label) ? label : '未分类';
       if (!stats[industry]) {
         stats[industry] = { count: 0, totalShares: 0 };

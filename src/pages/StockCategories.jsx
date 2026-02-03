@@ -19,7 +19,7 @@ import IndustryCombobox from '../components/stock/IndustryCombobox';
 import IndustryManager from '../components/industry/IndustryManager';
 import { Settings } from 'lucide-react';
 import { stocksApi } from '@/api/resources/stocks';
-import { cleanStr, isValidLabel } from '@/lib/normalize';
+import { normalizeIndustry } from '@/lib/normalize';
 
 export default function StockCategories() {
   const currentYear = new Date().getFullYear();
@@ -36,8 +36,7 @@ export default function StockCategories() {
   const queryClient = useQueryClient();
 
   const getIndustryLabel = (stock) => {
-    const raw = cleanStr(stock?.industry_level1 ?? stock?.industry_74);
-    return isValidLabel(raw) ? raw : '未分类';
+    return normalizeIndustry(stock?.industry_level1 ?? stock?.industry_74);
   };
 
   // 监听localStorage变化

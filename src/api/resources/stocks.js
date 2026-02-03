@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import { cleanStr, cleanNum } from '@/lib/normalize';
+import { cleanStr, cleanNum, normalizeIndustry } from '@/lib/normalize';
 
 const resourcePath = '/stocks';
 
@@ -42,9 +42,9 @@ function normalizeIndustry(name) {
 
 function normalizeItem(it) {
   if (!it || typeof it !== "object") return it;
-  const industryLevel1 = cleanStr(it.industry_level1 ?? it.industryLevel1 ?? it.industry1 ?? it.industry_74);
-  const industryLevel2 = cleanStr(it.industry_level2 ?? it.industryLevel2 ?? it.industry2);
-  const industryLevel3 = cleanStr(it.industry_level3 ?? it.industryLevel3 ?? it.industry3);
+  const industryLevel1 = normalizeIndustry(it.industry_level1 ?? it.industryLevel1 ?? it.industry1 ?? it.industry_74);
+  const industryLevel2 = normalizeIndustry(it.industry_level2 ?? it.industryLevel2 ?? it.industry2);
+  const industryLevel3 = normalizeIndustry(it.industry_level3 ?? it.industryLevel3 ?? it.industry3);
 
   const totalShares = cleanNum(it.totalShares ?? it.total_shares ?? it.total_capital ?? it.total_cap ?? it["总股本"]);
   const floatShares = cleanNum(it.floatShares ?? it.float_shares ?? it.float_capital ?? it.float_cap ?? it["流通股本"]);
