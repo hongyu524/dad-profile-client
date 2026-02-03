@@ -3,6 +3,43 @@ import { cleanStr, cleanNum } from '@/lib/normalize';
 
 const resourcePath = '/stocks';
 
+function decodeWeirdQuotedString(v) {
+  if (v == null) return "";
+  if (typeof v !== "string") return v;
+
+  const s = v.trim();
+
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    try {
+      const parsed = JSON.parse(s);
+      if (typeof parsed === "string") return parsed.trim();
+      return parsed;
+    } catch (_) {}
+  }
+
+  return s.replace(/^"+|"+$/g, "").replace(/^'+|'+$/g, "").trim();
+}
+
+function toNumber(v) {
+  if (v == null || v === "") return 0;
+  if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+
+  const s = decodeWeirdQuotedString(v)
+    .replace(/,/g, "")
+    .replace(/\s+/g, "");
+
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function normalizeIndustry(name) {
+  const x = decodeWeirdQuotedString(name);
+  return x ? x : "未分类";
+}
+
 function normalizeItem(it) {
   if (!it || typeof it !== "object") return it;
   const industryLevel1 = cleanStr(it.industry_level1 ?? it.industryLevel1 ?? it.industry1 ?? it.industry_74);
@@ -35,8 +72,24 @@ export const stocksApi = {
     console.info("[stocks] RAW API RESPONSE", data);
     const raw = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
     const items = raw.map(normalizeItem);
-    console.info("[stocks] items length:", items.length);
-    return items;
+    const cleaned = items.map((it) => ({
+      ...it,
+
+      code: decodeWeirdQuotedString(it.code),
+      name: decodeWeirdQuotedString(it.name ?? it.stockName ?? it.title),
+      product: decodeWeirdQuotedString(it.product),
+
+      industry_level1: normalizeIndustry(it.industry_level1),
+      industry_level2: normalizeIndustry(it.industry_level2),
+      industry_level3: normalizeIndustry(it.industry_level3),
+
+      total_cap: toNumber(it.total_cap),
+      float_cap: toNumber(it.float_cap),
+      totalShares: toNumber(it.totalShares ?? it.total_shares),
+      floatShares: toNumber(it.floatShares ?? it.float_shares),
+    }));
+    console.info("[stocks] items length:", cleaned.length);
+    return cleaned;
   },
   create: (data) => apiClient.post(resourcePath, data),
   update: (id, data) => apiClient.put(`${resourcePath}/${id}`, data),
