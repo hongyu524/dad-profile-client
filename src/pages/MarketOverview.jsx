@@ -8,12 +8,15 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import IndustryManager from '../components/industry/IndustryManager';
 import { apiClient, getApiClientDiagnostics } from '@/lib/apiClient';
+import { cleanStr, cleanNum, isValidLabel } from '@/lib/normalize';
 
 export default function MarketOverview() {
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(2026);
   const [showIndustryManager, setShowIndustryManager] = useState(false);
+  const debugEnabled = (typeof import.meta !== 'undefined' && import.meta.env?.DEV) ||
+    new URLSearchParams(window.location.search).get("debug") === "1";
   console.log("[MarketOverview] render", { selectedYear });
   const [stocksData, setStocksData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -141,9 +144,15 @@ export default function MarketOverview() {
     if (!stocks.length) return null;
     
     const totalStocks = stocks.length;
-    const industries = [...new Set(stocks.map(s => s.industry_74))].length;
-    const totalMarketCap = stocks.reduce((sum, s) => sum + (s.total_shares || 0), 0);
-    const circulatingShares = stocks.reduce((sum, s) => sum + (s.circulating_shares || 0), 0);
+    const industryLabels = stocks
+      .map(s => cleanStr(s.industry_level1 ?? s.industry_74))
+      .filter(isValidLabel);
+    const industryCount = new Set(industryLabels).size;
+    const hasUncategorized = stocks.some(s => !isValidLabel(s.industry_level1 ?? s.industry_74));
+    const industries = industryCount + (hasUncategorized ? 1 : 0);
+
+    const totalMarketCap = stocks.reduce((sum, s) => sum + cleanNum(s.totalShares ?? s.total_shares ?? s.totalSharesCn), 0);
+    const circulatingShares = stocks.reduce((sum, s) => sum + cleanNum(s.floatShares ?? s.circulating_shares ?? s.floatSharesCn), 0);
 
     return {
       totalStocks,
@@ -159,12 +168,13 @@ export default function MarketOverview() {
     
     const stats = {};
     stocks.forEach(stock => {
-      const industry = stock.industry_74 || '未分类';
+      const label = cleanStr(stock.industry_level1 ?? stock.industry_74);
+      const industry = isValidLabel(label) ? label : '未分类';
       if (!stats[industry]) {
         stats[industry] = { count: 0, totalShares: 0 };
       }
       stats[industry].count++;
-      stats[industry].totalShares += stock.total_shares || 0;
+      stats[industry].totalShares += cleanNum(stock.totalShares ?? stock.total_shares ?? stock.totalSharesCn);
     });
     
     return Object.entries(stats)
@@ -177,10 +187,10 @@ export default function MarketOverview() {
   };
 
   const formatNumber = (num) => {
-    if (!num) return '0';
-    if (num >= 100000000) return (num / 100000000).toFixed(2) + '亿';
-    if (num >= 10000) return (num / 10000).toFixed(2) + '万';
-    return num.toLocaleString();
+    const n = cleanNum(num);
+    if (n >= 100000000) return (n / 100000000).toFixed(2) + '亿';
+    if (n >= 10000) return (n / 10000).toFixed(2) + '万';
+    return Math.round(n).toLocaleString();
   };
 
   if (isLoading) {
@@ -193,26 +203,28 @@ export default function MarketOverview() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded border border-slate-700/60 bg-slate-900/50 p-3 text-xs text-slate-300 space-y-1">
-        <div>config.json status: {configDiag.status}{configDiag.fetchStatus ? ` (${configDiag.fetchStatus})` : ''}</div>
-        <div>apiBaseUrl: {configDiag.apiBaseUrl || 'MISSING'} (env fallback: {configDiag.envBaseUrl ? 'present' : 'none'})</div>
-        <div>apiClient source: {getApiClientDiagnostics().configSource || 'n/a'}</div>
-        <div>apiClient base: {getApiClientDiagnostics().apiBaseUrl || 'n/a'}</div>
-        {configDiag.configUrl && <div>configUrl: {configDiag.configUrl}</div>}
-        {configDiag.error && <div className="text-amber-400">config error: {configDiag.error.message}</div>}
-        {fetchError && <div className="text-amber-400">stocks error: {fetchError.message}</div>}
-        <div className="text-slate-500">debug: GET /stocks?year={selectedYear}</div>
-        {stocksRawDiag && (
-          <pre className="max-h-32 overflow-auto bg-slate-800/60 p-2 rounded text-[11px] text-slate-200">
-            {JSON.stringify(stocksRawDiag, null, 2)}
-          </pre>
-        )}
-        {stocksData && (
-          <pre className="max-h-32 overflow-auto bg-slate-800/60 p-2 rounded text-[11px] text-slate-200">
-            {JSON.stringify(stocksData.slice(0, 5), null, 2)}
-          </pre>
-        )}
-      </div>
+      {debugEnabled && (
+        <div className="rounded border border-slate-700/60 bg-slate-900/50 p-3 text-xs text-slate-300 space-y-1">
+          <div>config.json status: {configDiag.status}{configDiag.fetchStatus ? ` (${configDiag.fetchStatus})` : ''}</div>
+          <div>apiBaseUrl: {configDiag.apiBaseUrl || 'MISSING'} (env fallback: {configDiag.envBaseUrl ? 'present' : 'none'})</div>
+          <div>apiClient source: {getApiClientDiagnostics().configSource || 'n/a'}</div>
+          <div>apiClient base: {getApiClientDiagnostics().apiBaseUrl || 'n/a'}</div>
+          {configDiag.configUrl && <div>configUrl: {configDiag.configUrl}</div>}
+          {configDiag.error && <div className="text-amber-400">config error: {configDiag.error.message}</div>}
+          {fetchError && <div className="text-amber-400">stocks error: {fetchError.message}</div>}
+          <div className="text-slate-500">debug: GET /stocks?year={selectedYear}</div>
+          {stocksRawDiag && (
+            <pre className="max-h-32 overflow-auto bg-slate-800/60 p-2 rounded text-[11px] text-slate-200">
+              {JSON.stringify(stocksRawDiag, null, 2)}
+            </pre>
+          )}
+          {stocksData && (
+            <pre className="max-h-32 overflow-auto bg-slate-800/60 p-2 rounded text-[11px] text-slate-200">
+              {JSON.stringify(stocksData.slice(0, 5), null, 2)}
+            </pre>
+          )}
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <h1 className="text-3xl font-bold text-white">市场总览</h1>

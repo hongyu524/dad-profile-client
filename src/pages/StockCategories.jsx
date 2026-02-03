@@ -19,6 +19,7 @@ import IndustryCombobox from '../components/stock/IndustryCombobox';
 import IndustryManager from '../components/industry/IndustryManager';
 import { Settings } from 'lucide-react';
 import { stocksApi } from '@/api/resources/stocks';
+import { cleanStr, isValidLabel } from '@/lib/normalize';
 
 export default function StockCategories() {
   const currentYear = new Date().getFullYear();
@@ -33,6 +34,11 @@ export default function StockCategories() {
   const [refreshKey, setRefreshKey] = useState(0);
   
   const queryClient = useQueryClient();
+
+  const getIndustryLabel = (stock) => {
+    const raw = cleanStr(stock?.industry_level1 ?? stock?.industry_74);
+    return isValidLabel(raw) ? raw : '未分类';
+  };
 
   // 监听localStorage变化
   useEffect(() => {
@@ -152,12 +158,12 @@ export default function StockCategories() {
   // 获取所有行业分类（包括自定义行业）
   const industries = useMemo(() => {
     const customIndustries = JSON.parse(localStorage.getItem('customIndustries') || '[]');
-    const stockIndustries = stocks.map(s => s.industry_74).filter(Boolean);
+    const stockIndustries = stocks.map(getIndustryLabel).filter(Boolean);
     const allIndustries = [...new Set([...stockIndustries, ...customIndustries])].sort();
     
     return allIndustries.map(industry => ({
       name: industry,
-      count: stocks.filter(s => s.industry_74 === industry).length
+      count: stocks.filter(s => getIndustryLabel(s) === industry).length
     }));
   }, [stocks, refreshKey]);
 
@@ -167,7 +173,7 @@ export default function StockCategories() {
 
     // 行业筛选
     if (selectedIndustry !== 'all') {
-      filtered = filtered.filter(s => s.industry_74 === selectedIndustry);
+      filtered = filtered.filter(s => getIndustryLabel(s) === selectedIndustry);
     }
 
     // 搜索筛选
@@ -191,7 +197,7 @@ export default function StockCategories() {
 
     // 行业筛选
     if (selectedIndustry !== 'all') {
-      filtered = filtered.filter(s => s.industry_74 === selectedIndustry);
+      filtered = filtered.filter(s => getIndustryLabel(s) === selectedIndustry);
     }
 
     // 搜索筛选
@@ -212,7 +218,7 @@ export default function StockCategories() {
 
     // 行业筛选
     if (selectedIndustry !== 'all') {
-      filtered = filtered.filter(s => s.industry_74 === selectedIndustry);
+      filtered = filtered.filter(s => getIndustryLabel(s) === selectedIndustry);
     }
 
     // 搜索筛选
@@ -495,7 +501,7 @@ export default function StockCategories() {
       <IndustryManager
         open={showIndustryManager}
         onClose={() => setShowIndustryManager(false)}
-        industries={stocks.map(s => s.industry_74).filter(Boolean)}
+        industries={stocks.map(getIndustryLabel).filter(Boolean)}
         onRefresh={() => queryClient.invalidateQueries({ queryKey: ['all-year-stocks'] })}
       />
       </div>
