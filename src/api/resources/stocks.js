@@ -1,9 +1,15 @@
-import { apiClient } from '../apiClient';
+import { apiClient } from '@/lib/apiClient';
 
 const resourcePath = '/stocks';
 
 export const stocksApi = {
-  list: () => apiClient.get(resourcePath),
+  list: async (year) => {
+    const data = await apiClient.get(year ? `${resourcePath}?year=${encodeURIComponent(year)}` : resourcePath);
+    console.info("[stocks] raw response:", data);
+    const items = Array.isArray(data?.items) ? data.items : [];
+    console.info("[stocks] items length:", items.length);
+    return items;
+  },
   create: (data) => apiClient.post(resourcePath, data),
   update: (id, data) => apiClient.put(`${resourcePath}/${id}`, data),
   remove: (id) => apiClient.del(`${resourcePath}/${id}`),

@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TrendingUp, TrendingDown, Activity, BarChart3, ChevronRight, Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,32 +7,99 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import IndustryManager from '../components/industry/IndustryManager';
-import { stocksApi } from '@/api/resources/stocks';
+import { apiClient, getApiClientDiagnostics } from '@/lib/apiClient';
 
 export default function MarketOverview() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const currentYear = new Date().getFullYear();
-  const [selectedYear, setSelectedYear] = React.useState(2026);
-  const [showIndustryManager, setShowIndustryManager] = React.useState(false);
-
-  const { data: allYearStocks = [], isLoading } = useQuery({
-    queryKey: ['all-year-stocks'],
-    queryFn: () => stocksApi.list(),
+  const [selectedYear, setSelectedYear] = useState(2026);
+  const [showIndustryManager, setShowIndustryManager] = useState(false);
+  console.log("[MarketOverview] render", { selectedYear });
+  const [stocksData, setStocksData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
+  const [configDiag, setConfigDiag] = useState({
+    status: 'pending',
+    apiBaseUrl: '',
+    fetchStatus: null,
+    error: null,
+    source: null,
+    envBaseUrl: (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_BASE_URL : undefined) || '',
   });
+  const [stocksRawDiag, setStocksRawDiag] = useState(null);
+
+  useEffect(() => {
+    const checkConfig = async () => {
+      try {
+        const baseUrl = (typeof import.meta !== 'undefined' ? import.meta.env?.BASE_URL : process.env?.BASE_URL) || '/';
+        const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+        const configUrl = `${normalizedBase}config.json`;
+        const res = await fetch(configUrl, { cache: 'no-cache' });
+        const body = res.ok ? await res.json() : null;
+        setConfigDiag({
+          status: res.ok ? 'ok' : 'error',
+          apiBaseUrl: body?.apiBaseUrl || '',
+          fetchStatus: res.status,
+          error: res.ok ? null : new Error(`status ${res.status}`),
+          source: res.ok ? 'config.json' : null,
+          envBaseUrl: (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_BASE_URL : undefined) || '',
+          configUrl,
+        });
+        console.info('[MarketOverview] config check', { status: res.status, apiBaseUrl: body?.apiBaseUrl, configUrl });
+      } catch (err) {
+        setConfigDiag({
+          status: 'error',
+          apiBaseUrl: '',
+          fetchStatus: null,
+          error: err,
+          source: null,
+          envBaseUrl: (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_BASE_URL : undefined) || '',
+          configUrl: null,
+        });
+        console.error('[MarketOverview] config fetch error', err);
+      }
+    };
+    checkConfig();
+  }, []);
+
+  const fetchStocks = useCallback(() => {
+    console.log("[MarketOverview] useEffect firing", selectedYear);
+    console.log("[MarketOverview] fetching stocks", selectedYear);
+    setIsLoading(true);
+    setFetchError(null);
+    const path = selectedYear ? `/stocks?year=${encodeURIComponent(selectedYear)}` : '/stocks';
+    apiClient.get(path)
+      .then((data) => {
+        setStocksRawDiag(data);
+        const items = Array.isArray(data?.items) ? data.items : [];
+        console.info("[MarketOverview] stocks loaded", items.length, data);
+        setStocksData(items);
+      })
+      .catch(err => {
+        console.error("[MarketOverview] fetch error", err);
+        setFetchError(err);
+      })
+      .finally(() => setIsLoading(false));
+  }, [selectedYear]);
+
+  useEffect(() => {
+    fetchStocks();
+  }, [fetchStocks]);
 
   // 获取当前年份的股票数据，如果没有则使用最近年份的数据
   const stocks = React.useMemo(() => {
-    if (!allYearStocks.length) return [];
+    if (!stocksData.length) return [];
     
     // 按股票代码分组
     const stocksByCode = {};
-    allYearStocks.forEach(stock => {
+    stocksData.forEach(stock => {
       const code = stock.code;
+      const stockYear = Number(stock.year);
+      if (!Number.isFinite(stockYear)) return;
       if (!stocksByCode[code]) {
         stocksByCode[code] = [];
       }
-      stocksByCode[code].push(stock);
+      stocksByCode[code].push({ ...stock, year: stockYear });
     });
     
     // 对于每个股票代码，找到最接近且不超过选定年份的数据
@@ -52,10 +118,10 @@ export default function MarketOverview() {
     });
     
     return result;
-  }, [allYearStocks, selectedYear]);
+  }, [stocksData, selectedYear]);
 
   const availableYears = React.useMemo(() => {
-    const years = [...new Set(allYearStocks.map(s => s.year))].filter(y => y >= 2026);
+    const years = [...new Set(stocksData.map(s => Number(s.year)).filter(Number.isFinite))].filter(y => y >= 2026);
     // 确保当前选择的年份也在列表中
     if (!years.includes(selectedYear)) {
       years.push(selectedYear);
@@ -67,7 +133,7 @@ export default function MarketOverview() {
       }
     }
     return years.sort((a, b) => b - a);
-  }, [allYearStocks, selectedYear]);
+  }, [stocksData, selectedYear]);
 
   // 计算市场统计数据
   const marketStats = React.useMemo(() => {
@@ -126,6 +192,21 @@ export default function MarketOverview() {
 
   return (
     <div className="space-y-6">
+      <div className="rounded border border-slate-700/60 bg-slate-900/50 p-3 text-xs text-slate-300 space-y-1">
+        <div>config.json status: {configDiag.status}{configDiag.fetchStatus ? ` (${configDiag.fetchStatus})` : ''}</div>
+        <div>apiBaseUrl: {configDiag.apiBaseUrl || 'MISSING'} (env fallback: {configDiag.envBaseUrl ? 'present' : 'none'})</div>
+        <div>apiClient source: {getApiClientDiagnostics().configSource || 'n/a'}</div>
+        <div>apiClient base: {getApiClientDiagnostics().apiBaseUrl || 'n/a'}</div>
+        {configDiag.configUrl && <div>configUrl: {configDiag.configUrl}</div>}
+        {configDiag.error && <div className="text-amber-400">config error: {configDiag.error.message}</div>}
+        {fetchError && <div className="text-amber-400">stocks error: {fetchError.message}</div>}
+        <div className="text-slate-500">debug: GET /stocks?year={selectedYear}</div>
+        {stocksRawDiag && (
+          <pre className="max-h-32 overflow-auto bg-slate-800/60 p-2 rounded text-[11px] text-slate-200">
+            {JSON.stringify(stocksRawDiag, null, 2)}
+          </pre>
+        )}
+      </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <h1 className="text-3xl font-bold text-white">市场总览</h1>
@@ -260,7 +341,7 @@ export default function MarketOverview() {
         open={showIndustryManager}
         onClose={() => setShowIndustryManager(false)}
         industries={stocks.map(s => s.industry_74).filter(Boolean)}
-        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['all-year-stocks'] })}
+        onRefresh={() => fetchStocks()}
       />
     </div>
   );

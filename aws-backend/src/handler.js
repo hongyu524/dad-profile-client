@@ -20,6 +20,8 @@ const jsonResponse = (statusCode, body) => ({
 export const handler = async (event) => {
   try {
     const { path = '', httpMethod } = event;
+    console.log('request', { path, httpMethod });
+    if (path === '/health' && httpMethod === 'GET') return jsonResponse(200, { ok: true });
     // stocks
     if (path === '/stocks' && httpMethod === 'GET') return jsonResponse(200, await listStocks(event));
     if (path === '/stocks' && httpMethod === 'POST') return jsonResponse(200, await createStock(event));

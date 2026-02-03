@@ -1,38 +1,56 @@
-import crypto from 'crypto';
-import { ddbPut, ddbScan, ddbDelete } from '../lib/ddb.js';
+import { ddbPut, ddbDelete, ddbQuery } from '../lib/ddb.js';
 
-const table = process.env.TABLE_NAME;
+const encodeToken = (lek) => Buffer.from(JSON.stringify(lek)).toString('base64');
+const decodeToken = (token) => JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
 
 const buildItem = (body) => {
-  const id = body.id || crypto.randomUUID();
+  const code = body.code || body.id; // keep compatibility if UI sends id
   const year = body.year || new Date().getFullYear();
+  if (!code) throw new Error('code is required');
+
   return {
-    PK: `STOCK#${id}`,
-    SK: `META#${year}`,
+    PK: `STOCKS#${year}`,
+    SK: `CODE#${code}`,
+    entityType: 'stock',
+    code,
+    id: code,
+    year,
     ...body,
-    id,
-    year
   };
 };
 
 export const listStocks = async (event) => {
   const params = event?.queryStringParameters || {};
-  const targetYear = params.year || new Date().getFullYear();
-  if (!params.year) console.warn('GET /stocks without year; defaulting to current year');
-  // MVP scan + filter in Lambda (filter early by year)
-  const res = await ddbScan({});
-  const items = (res.Items || []).filter((i) => i.PK?.startsWith('STOCK#'));
-  let filtered = items.filter((s) => String(s.year) === String(targetYear));
-  if (params.industry) filtered = filtered.filter((s) => s.industry_74 === params.industry);
-  if (params.keyword) {
-    const kw = params.keyword.toLowerCase();
-    filtered = filtered.filter((s) =>
-      s.name?.toLowerCase().includes(kw) ||
-      s.code?.toLowerCase().includes(kw) ||
-      s.industry_74?.toLowerCase().includes(kw)
-    );
+  const year = params.year ? String(params.year) : String(new Date().getFullYear());
+  const start = Date.now();
+
+  const queryParams = {
+    KeyConditionExpression: 'PK = :pk',
+    ExpressionAttributeValues: { ':pk': `STOCKS#${year}` },
+  };
+
+  if (params.nextToken) {
+    try {
+      queryParams.ExclusiveStartKey = decodeToken(params.nextToken);
+    } catch (err) {
+      console.warn('invalid nextToken ignored');
+    }
   }
-  return filtered;
+
+  const res = await ddbQuery(queryParams);
+  const items = res.Items || [];
+  const nextToken = res.LastEvaluatedKey ? encodeToken(res.LastEvaluatedKey) : null;
+
+  console.log('stocks.list', {
+    method: event?.httpMethod,
+    path: event?.path,
+    year,
+    count: items.length,
+    nextToken: !!nextToken,
+    ms: Date.now() - start,
+  });
+
+  return { items, nextToken };
 };
 
 export const createStock = async (event) => {
@@ -45,11 +63,10 @@ export const createStock = async (event) => {
 export const updateStock = async (event) => {
   const { id } = event.pathParameters || {};
   const body = JSON.parse(event.body || '{}');
-  if (!body.year) {
-    throw new Error('year is required to update stock');
-  }
+  if (!body.year) throw new Error('year is required to update stock');
+  const code = body.code || id;
   const year = body.year;
-  const item = { PK: `STOCK#${id}`, SK: `META#${year}`, ...body, id, year };
+  const item = buildItem({ ...body, code, year });
   await ddbPut({ Item: item });
   return item;
 };
@@ -57,10 +74,11 @@ export const updateStock = async (event) => {
 export const deleteStock = async (event) => {
   const { id } = event.pathParameters || {};
   const body = JSON.parse(event.body || '{}');
+  const code = body.code || id;
   if (!body.year) {
     throw new Error('year is required to delete stock');
   }
   const year = body.year;
-  await ddbDelete({ Key: { PK: `STOCK#${id}`, SK: `META#${year}` } });
+  await ddbDelete({ Key: { PK: `STOCKS#${year}`, SK: `CODE#${code}` } });
   return { ok: true };
 };

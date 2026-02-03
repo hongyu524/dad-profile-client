@@ -4,6 +4,7 @@ import App from '@/App.jsx'
 import FamilyLogin from '@/pages/FamilyLogin.jsx'
 import { isAuthed } from '@/auth/gate'
 import '@/index.css'
+import { loadRuntimeConfig } from '@/lib/runtimeConfig'
 
 function Root() {
   const [authed, setAuthedState] = useState(isAuthed());
@@ -15,11 +16,26 @@ function Root() {
   return <App />;
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  // <React.StrictMode>
-  <Root />
-  // </React.StrictMode>,
-)
+async function bootstrap() {
+  const rootEl = document.getElementById('root');
+  try {
+    await loadRuntimeConfig();
+    ReactDOM.createRoot(rootEl).render(
+      // <React.StrictMode>
+      <Root />
+      // </React.StrictMode>,
+    );
+  } catch (err) {
+    console.error(err);
+    if (rootEl) {
+      rootEl.innerHTML = `<div style="padding:16px;color:#f97316;background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.4);border-radius:8px;font-family:system-ui;">
+        Missing config.json or apiBaseUrl. 请在 public/config.json 配置 apiBaseUrl 并重新部署。
+      </div>`;
+    }
+  }
+}
+
+bootstrap();
 
 if (import.meta.hot) {
   import.meta.hot.on('vite:beforeUpdate', () => {
@@ -29,6 +45,3 @@ if (import.meta.hot) {
     window.parent?.postMessage({ type: 'sandbox:afterUpdate' }, '*');
   });
 }
-
-
-
