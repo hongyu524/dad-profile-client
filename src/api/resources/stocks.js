@@ -5,7 +5,11 @@ const resourcePath = '/stocks';
 export const stocksApi = {
   list: async (year) => {
     const data = await apiClient.get(year ? `${resourcePath}?year=${encodeURIComponent(year)}` : resourcePath);
-    console.info("[stocks] raw response:", data);
+    console.info("[stocks] RAW API RESPONSE", data);
+    if (Array.isArray(data)) {
+      console.info("[stocks] treating response as array", data.length);
+      return data;
+    }
     const items = Array.isArray(data?.items) ? data.items : [];
     console.info("[stocks] items length:", items.length);
     return items;

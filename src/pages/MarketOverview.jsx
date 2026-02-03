@@ -70,8 +70,9 @@ export default function MarketOverview() {
     const path = selectedYear ? `/stocks?year=${encodeURIComponent(selectedYear)}` : '/stocks';
     apiClient.get(path)
       .then((data) => {
+        console.log("[MarketOverview] RAW API RESPONSE", data);
         setStocksRawDiag(data);
-        const items = Array.isArray(data?.items) ? data.items : [];
+        const items = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
         console.info("[MarketOverview] stocks loaded", items.length, data);
         setStocksData(items);
       })
@@ -204,6 +205,11 @@ export default function MarketOverview() {
         {stocksRawDiag && (
           <pre className="max-h-32 overflow-auto bg-slate-800/60 p-2 rounded text-[11px] text-slate-200">
             {JSON.stringify(stocksRawDiag, null, 2)}
+          </pre>
+        )}
+        {stocksData && (
+          <pre className="max-h-32 overflow-auto bg-slate-800/60 p-2 rounded text-[11px] text-slate-200">
+            {JSON.stringify(stocksData.slice(0, 5), null, 2)}
           </pre>
         )}
       </div>

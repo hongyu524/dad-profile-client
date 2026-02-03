@@ -45,7 +45,12 @@ export default function StockCategories() {
 
   const { data: allYearStocks = [], isLoading } = useQuery({
     queryKey: ['all-year-stocks'],
-    queryFn: () => stocksApi.list(),
+    queryFn: async () => {
+      const data = await stocksApi.list();
+      console.log("[StockCategories] RAW API RESPONSE", data);
+      if (Array.isArray(data)) return data;
+      return Array.isArray(data?.items) ? data.items : [];
+    },
   });
 
   // 从URL参数读取行业筛选和年份
@@ -112,7 +117,7 @@ export default function StockCategories() {
   }, [allYearStocks, selectedYear]);
 
   const availableYears = useMemo(() => {
-    const years = [...new Set(allYearStocks.map(s => s.year))].filter(y => y >= 2026);
+    const years = [...new Set(allYearStocks.map(s => Number(s.year)).filter(Number.isFinite))].filter(y => y >= 2026);
     // 确保当前选择的年份也在列表中
     if (!years.includes(selectedYear)) {
       years.push(selectedYear);
