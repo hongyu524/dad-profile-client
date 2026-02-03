@@ -17,9 +17,11 @@ concurrency:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,15 +40,35 @@ jobs:
           VITE_API_BASE_URL: https://olvu4z746i7cxbvaujekdfa2li0rrlym.lambda-url.us-west-2.on.aws
           VITE_AUTH_MODE: anonymous
           VITE_FAMILY_CODE: ${{ secrets.VITE_FAMILY_CODE }}
+        run: npm run build
+
+      # OPTIONAL: ensure 404.html exists for SPA fallback
+      - name: Ensure 404.html exists
         run: |
-          npm run build
-          cp dist/index.html dist/404.html
-          cp CNAME dist/CNAME
+          if [ -f dist/index.html ]; then
+            cp dist/index.html dist/404.html
+          fi
+
+      # OPTIONAL: copy CNAME if you are using a custom domain and have a CNAME file in repo root
+      - name: Copy CNAME (if exists)
+        run: |
+          if [ -f CNAME ]; then
+            cp CNAME dist/CNAME
+          fi
+
+      # DEBUG: prove config.json is actually inside dist on the runner
+      - name: Debug dist contents
+        run: |
+          echo "---- LIST DIST ----"
+          ls -la dist
+          echo "---- SHOW CONFIG.JSON ----"
+          cat dist/config.json || true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          # ✅ IMPORTANT: must be "dist" (NO leading ./)
+          path: dist
 
       - name: Deploy to GitHub Pages
         id: deployment
