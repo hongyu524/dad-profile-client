@@ -12,8 +12,13 @@ export async function loadRuntimeConfig() {
         const baseUrl = (typeof import.meta !== 'undefined' ? import.meta.env?.BASE_URL : process.env?.BASE_URL) || '/';
         const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
         const configUrl = `${normalizedBase}config.json`;
+        console.info("[runtimeConfig] loading", { configUrl });
         const res = await fetch(configUrl, { cache: "no-store" });
-        if (!res.ok) throw new Error(`Failed to load config.json (status ${res.status}) at ${configUrl}`);
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.error("[runtimeConfig] config fetch failed", { status: res.status, url: configUrl, bodyPreview: text.slice(0, 200) });
+          throw new Error(`Failed to load config.json (status ${res.status}) at ${configUrl}`);
+        }
         let json;
         try {
           json = await res.json();
