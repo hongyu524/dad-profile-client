@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script>
+      (function () {
+        var l = window.location;
+        var path = l.pathname;
+
+        // If it's a real file request (has a dot) OR is an asset/config, do NOT redirect
+        var isFile = path.split('/').pop().includes('.');
+        var isAsset = path.startsWith('/assets/');
+        var isConfig = path === '/config.json';
+
+        if (isFile || isAsset || isConfig) return;
+
+        // SPA redirect: send to index with original path in query
+        l.replace(l.origin + '/?p=' + encodeURIComponent(path + l.search + l.hash));
+      })();
+    </script>
+  </head>
+</html>

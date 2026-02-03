@@ -5,7 +5,7 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   logLevel: 'error', // Suppress warnings, only show errors
-  base: './',
+  base: '/',
   plugins: [
     react(),
   ],

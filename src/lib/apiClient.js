@@ -17,9 +17,15 @@ async function ensureConfig() {
       const configUrl = `${normalizedBase}config.json`;
       try {
         console.info("[apiClient] loading config.json from", configUrl);
-        const res = await fetch(configUrl, { cache: "no-cache" });
-        if (!res.ok) throw new Error(`Failed to load config.json (${res.status})`);
-        const json = await res.json();
+        const res = await fetch(configUrl, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Failed to load config.json (${res.status}) at ${configUrl}`);
+        let json;
+        try {
+          json = await res.json();
+        } catch (err) {
+          console.error("[apiClient] config.json parse error", err);
+          throw new Error(`Invalid JSON in config.json at ${configUrl}`);
+        }
         const base = String(json?.apiBaseUrl || "").trim();
         if (!base) throw new Error("Missing apiBaseUrl in config.json");
         apiBaseUrl = base.replace(/\/+$/, ""); // trim trailing slash

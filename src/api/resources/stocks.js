@@ -35,11 +35,6 @@ function toNumber(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function normalizeIndustry(name) {
-  const x = decodeWeirdQuotedString(name);
-  return x ? x : "未分类";
-}
-
 function normalizeItem(it) {
   if (!it || typeof it !== "object") return it;
   const industryLevel1 = normalizeIndustry(it.industry_level1 ?? it.industryLevel1 ?? it.industry1 ?? it.industry_74);

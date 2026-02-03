@@ -6,6 +6,20 @@ import { isAuthed } from '@/auth/gate'
 import '@/index.css'
 import { loadRuntimeConfig } from '@/lib/runtimeConfig'
 
+// Restore SPA path after GitHub Pages redirect
+const redirect = sessionStorage.redirect;
+delete sessionStorage.redirect;
+if (redirect && redirect !== location.pathname) {
+  history.replaceState(null, null, redirect);
+}
+
+// Restore SPA path from ?p=... (GitHub Pages fallback)
+const params = new URLSearchParams(window.location.search);
+const p = params.get("p");
+if (p) {
+  window.history.replaceState(null, "", decodeURIComponent(p));
+}
+
 function Root() {
   const [authed, setAuthedState] = useState(isAuthed());
 
