@@ -47,6 +47,8 @@ function normalizeItem(it) {
 
   return {
     ...it,
+    // ensure stable id for selection; fall back to code
+    id: cleanStr(it.id ?? it.code),
     code: cleanStr(it.code),
     name: cleanStr(it.name ?? it.stockName ?? it.title),
     product: cleanStr(it.product),
