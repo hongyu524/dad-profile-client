@@ -3,17 +3,17 @@ import { listIndustries, createIndustry, updateIndustry, deleteIndustry } from '
 import { screenHoldings } from './routes/screen.js';
 import { aiInvoke } from './routes/ai.js';
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-  'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-  'Access-Control-Max-Age': '86400',
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://zhoutianming.store';
+const RESPONSE_HEADERS = {
   'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+  'Access-Control-Allow-Headers': 'Content-Type,Authorization,x-family-code',
+  'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
 };
 
 const jsonResponse = (statusCode, body) => ({
   statusCode,
-  headers: CORS_HEADERS,
+  headers: RESPONSE_HEADERS,
   body: JSON.stringify(body),
 });
 
@@ -38,7 +38,7 @@ export const handler = async (event) => {
     if (path === '/screen/holdings' && httpMethod === 'POST') return jsonResponse(200, await screenHoldings(event));
 
     // AI
-    if (path === '/ai/invoke' && httpMethod === 'POST') return await aiInvoke(event);
+    if (path === '/ai/invoke' && httpMethod === 'POST') return await aiInvoke(event, RESPONSE_HEADERS);
 
     if (httpMethod === 'OPTIONS') return jsonResponse(200, {});
 

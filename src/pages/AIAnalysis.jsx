@@ -324,6 +324,8 @@ export default function AIAnalysis() {
       const result = await aiApi.invoke({
         type: 'analysis',
         stockId: selectedStock.id,
+        stock: selectedStock, // backend templates need stock fields
+        params: { year: selectedStock?.year },
         prompt,
       });
 
@@ -367,6 +369,7 @@ export default function AIAnalysis() {
       const result = await aiApi.invoke({
         type: 'company_profile',
         stockId: selectedStock.id,
+        stock: selectedStock,
         prompt,
       });
 
@@ -408,6 +411,7 @@ export default function AIAnalysis() {
       const result = await aiApi.invoke({
         type: 'news',
         stockId: selectedStock.id,
+        stock: selectedStock,
         prompt,
       });
 
@@ -430,6 +434,11 @@ export default function AIAnalysis() {
       const result = await aiApi.invoke({
         type: 'news_summary',
         stockId: selectedStock?.id,
+        stock: selectedStock,
+        params: {
+          title: newsItem.title,
+          source: newsItem.source,
+        },
         prompt,
       });
 
@@ -470,6 +479,7 @@ export default function AIAnalysis() {
       const result = await aiApi.invoke({
         type: 'institution_analysis',
         stockId: selectedStock.id,
+        stock: selectedStock,
         prompt,
       });
 
@@ -499,6 +509,7 @@ export default function AIAnalysis() {
       const result = await aiApi.invoke({
         type: 'risk_radar',
         stockId: selectedStock.id,
+        stock: selectedStock,
         prompt,
       });
 
@@ -534,6 +545,7 @@ export default function AIAnalysis() {
       const result = await aiApi.invoke({
         type: 'fundamentals',
         stockId: selectedStock.id,
+        stock: selectedStock,
         prompt,
       });
 
@@ -562,6 +574,14 @@ export default function AIAnalysis() {
       const answer = await aiApi.invoke({
         type: 'follow_up',
         stockId: selectedStock.id,
+        stock: selectedStock,
+        params: {
+          question,
+          industry_analysis: currentAnalysis?.industry_analysis,
+          institution_analysis: currentAnalysis?.institution_analysis,
+          risk_analysis: currentAnalysis?.risk_analysis,
+          comprehensive_view: currentAnalysis?.comprehensive_view,
+        },
         prompt: contextPrompt,
       });
 
@@ -589,6 +609,7 @@ export default function AIAnalysis() {
       const result = await aiApi.invoke({
         type: 'peer_compare',
         stockId: selectedStock.id,
+        stock: selectedStock,
         prompt,
       });
 

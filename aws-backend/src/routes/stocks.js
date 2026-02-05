@@ -41,16 +41,31 @@ export const listStocks = async (event) => {
   const items = res.Items || [];
   const nextToken = res.LastEvaluatedKey ? encodeToken(res.LastEvaluatedKey) : null;
 
+  // Normalize numeric fields server-side so clients get consistent numbers
+  const normalizeNumber = (v) => {
+    if (v === undefined || v === null || v === '') return 0;
+    if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+    const n = Number(String(v).replace(/,/g, '').trim());
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const normalizedItems = items.map((it) => ({
+    ...it,
+    totalShares: normalizeNumber(it.totalShares ?? it.total_shares ?? it.total_cap ?? it.total_capital),
+    floatShares: normalizeNumber(it.floatShares ?? it.float_shares ?? it.float_cap ?? it.float_capital),
+    price: normalizeNumber(it.price),
+  }));
+
   console.log('stocks.list', {
     method: event?.httpMethod,
     path: event?.path,
     year,
-    count: items.length,
+    count: normalizedItems.length,
     nextToken: !!nextToken,
     ms: Date.now() - start,
   });
 
-  return { items, nextToken };
+  return { items: normalizedItems, nextToken };
 };
 
 export const createStock = async (event) => {

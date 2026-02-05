@@ -1,6 +1,7 @@
 "use strict";
 
-const jsonHeaders = { "Content-Type": "application/json" };
+const familyCode = (typeof import.meta !== "undefined" ? import.meta.env?.VITE_FAMILY_CODE : process.env?.VITE_FAMILY_CODE) || "";
+const jsonHeaders = { "Content-Type": "application/json", ...(familyCode ? { "x-family-code": familyCode } : {}) };
 
 let apiBaseUrl = null;
 let configSource = null; // 'config.json' | 'env'

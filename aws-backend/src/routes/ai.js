@@ -42,17 +42,26 @@ const checkRateLimit = (ip) => {
   return { allowed: true, remaining: BUCKET_LIMIT - bucket.count };
 };
 
-export const aiInvoke = async (event) => {
+export const aiInvoke = async (event, headers = {}) => {
   const body = JSON.parse(event.body || '{}');
   const { stockId, type, params = {}, stock } = body;
   if (!stockId || !type) {
-    return { statusCode: 400, body: JSON.stringify({ message: 'stockId and type required' }) };
+    return { statusCode: 400, headers, body: JSON.stringify({ message: 'stockId and type required' }) };
+  }
+
+  // family code check
+  const expected = process.env.FAMILY_CODE;
+  if (expected) {
+    const provided = event.headers?.['x-family-code'] || event.headers?.['X-Family-Code'];
+    if (!provided || provided !== expected) {
+      return { statusCode: 401, headers, body: JSON.stringify({ message: 'Unauthorized' }) };
+    }
   }
 
   const ip = event?.requestContext?.http?.sourceIp;
   const rate = checkRateLimit(ip);
   if (!rate.allowed) {
-    return { statusCode: 429, body: JSON.stringify({ message: 'AI rate limit exceeded' }) };
+    return { statusCode: 429, headers, body: JSON.stringify({ message: 'AI rate limit exceeded' }) };
   }
 
   const year = params.year || new Date().getFullYear();
@@ -61,6 +70,7 @@ export const aiInvoke = async (event) => {
   if (cacheRes.Item && cacheRes.Item.payload) {
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({ ...cacheRes.Item.payload, cached: true })
     };
   }
@@ -86,7 +96,7 @@ export const aiInvoke = async (event) => {
   }
 
   if (!parsed) {
-    return { statusCode: 500, body: JSON.stringify({ message: 'AI response invalid JSON' }) };
+    return { statusCode: 500, headers, body: JSON.stringify({ message: 'AI response invalid JSON' }) };
   }
 
   const item = {
@@ -109,6 +119,7 @@ export const aiInvoke = async (event) => {
 
   return {
     statusCode: 200,
+    headers,
     body: JSON.stringify({ ...parsed, cached: false })
   };
 };
