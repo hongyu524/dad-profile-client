@@ -190,7 +190,7 @@ export default function StockTable({ stocks, onStockEdit, highlightedCode }) {
               <td className="px-3 py-3 text-sm text-slate-400 text-center">{index + 1}</td>
               <td className="px-3 py-3 text-sm text-slate-300 font-mono whitespace-nowrap">{stock.code}</td>
               <td className="px-3 py-3 text-sm text-white font-medium whitespace-nowrap">{stock.name}</td>
-              <td className="px-3 py-3 text-sm text-slate-400 text-right whitespace-nowrap">{formatNumber(stock.total_shares)}</td>
+              <td className="px-3 py-3 text-sm text-slate-400 text-right whitespace-nowrap">{formatNumber(stock.total_shares ?? stock.totalShares)}</td>
               <td className="px-3 py-3 text-sm text-slate-400 text-right whitespace-nowrap">{formatNumber(stock.circulating_shares)}</td>
               <td className="px-3 py-3 text-sm text-slate-400 text-right whitespace-nowrap">{formatNumber(stock.restricted_shares)}</td>
               <td className="px-3 py-3 text-sm text-emerald-400 text-right whitespace-nowrap font-medium">{formatNumber(stock.profit)}</td>

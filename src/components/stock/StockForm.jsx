@@ -78,6 +78,7 @@ export default function StockForm({ stock, defaultYear, onSubmit, onCancel, exis
       ...formData,
       year: formData.year ? parseInt(formData.year) : currentYear,
       total_shares: toNum(formData.total_shares),
+      totalShares: toNum(formData.total_shares),
       circulating_shares: toNum(formData.circulating_shares),
       restricted_shares: toNum(formData.restricted_shares),
       profit: toNum(formData.profit),

@@ -27,6 +27,7 @@ export function InfraStack({ stack }: StackContext) {
     defaults: {
       function: {
         bind: [table],
+        permissions: ["bedrock:InvokeModel"],
       },
     },
     cors: {

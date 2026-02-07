@@ -65,12 +65,19 @@ export const listStocks = async (event) => {
     return Number.isFinite(n) ? n : 0;
   };
 
-  const normalizedItems = items.map((it) => ({
-    ...it,
-    totalShares: normalizeNumber(it.totalShares ?? it.total_shares ?? it.total_cap ?? it.total_capital),
-    floatShares: normalizeNumber(it.floatShares ?? it.float_shares ?? it.float_cap ?? it.float_capital ?? it.circulating_shares ?? it['流通股本']),
-    price: normalizeNumber(it.price),
-  }));
+  const normalizedItems = items.map((it) => {
+    const totalShares = normalizeNumber(it.totalShares ?? it.total_shares ?? it.total_cap ?? it.total_capital);
+    const floatShares = normalizeNumber(it.floatShares ?? it.float_shares ?? it.float_cap ?? it.float_capital ?? it.circulating_shares ?? it['流通股本']);
+    const price = normalizeNumber(it.price);
+    return {
+      ...it,
+      totalShares,
+      total_shares: totalShares,
+      floatShares,
+      circulating_shares: floatShares,
+      price,
+    };
+  });
 
   console.log('stocks.list', {
     method: event?.httpMethod,
