@@ -7,8 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
 import IndustryCombobox from '../components/stock/IndustryCombobox';
+import { toast } from 'sonner';
 import { stocksApi } from '@/api/resources/stocks';
 import { aiApi } from '@/api/resources/ai';
+
+const getAiErrorMessage = (err) =>
+  err?.data?.error || err?.data?.message || err?.message || 'AI 服务调用失败';
 
 function InstitutionalAnalysisTab({ selectedStock, onGenerate, generating }) {
   const [analysis, setAnalysis] = useState(null);
@@ -338,6 +342,7 @@ export default function AIAnalysis() {
       setAnalysisByStock((prev) => ({ ...prev, [selectedStock.id]: record }));
     } catch (error) {
       console.error('生成分析失败:', error);
+      toast.error(`生成分析失败: ${getAiErrorMessage(error)}`);
     } finally {
       setGeneratingAnalysis(false);
     }
