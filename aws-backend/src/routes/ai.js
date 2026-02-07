@@ -50,10 +50,16 @@ export const aiInvoke = async (event, headers = {}) => {
   }
 
   // family code check
+  // family code check (lenient: trim + case-insensitive)
   const expected = process.env.FAMILY_CODE;
   if (expected) {
-    const provided = event.headers?.['x-family-code'] || event.headers?.['X-Family-Code'];
-    if (!provided || provided !== expected) {
+    const providedRaw =
+      event.headers?.['x-family-code'] ||
+      event.headers?.['X-Family-Code'] ||
+      event.headers?.['X-FAMILY-CODE'];
+    const provided = (providedRaw ?? '').toString().trim();
+    const normalizedExpected = expected.toString().trim();
+    if (!provided || provided.toLowerCase() !== normalizedExpected.toLowerCase()) {
       return { statusCode: 401, headers, body: JSON.stringify({ message: 'Unauthorized' }) };
     }
   }
@@ -86,7 +92,20 @@ export const aiInvoke = async (event, headers = {}) => {
 
   while (attempts < 3 && !parsed) {
     attempts += 1;
-    raw = await invokeBedrock(prompt, { maxTokens, temperature });
+    try {
+      raw = await invokeBedrock(prompt, { maxTokens, temperature });
+    } catch (err) {
+      console.error('bedrock invoke error', err);
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({
+          message: 'Bedrock invoke failed',
+          error: err?.message,
+          code: err?.name,
+        }),
+      };
+    }
     parsed = parseJsonStrict(raw);
     if (!parsed) {
       const correction = `仅输出有效JSON，匹配之前的schema，不要添加额外文字。\n原始回复：${raw}`;

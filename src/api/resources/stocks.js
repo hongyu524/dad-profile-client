@@ -84,8 +84,9 @@ export const stocksApi = {
 
       total_cap: toNumber(it.total_cap),
       float_cap: toNumber(it.float_cap),
-      totalShares: toNumber(it.totalShares ?? it.total_shares),
-      floatShares: toNumber(it.floatShares ?? it.float_shares),
+      totalShares: toNumber(it.totalShares ?? it.total_shares ?? it.total_capital ?? it.total_cap ?? it['总股本']),
+      floatShares: toNumber(it.floatShares ?? it.float_shares ?? it.float_capital ?? it.float_cap ?? it.circulating_shares ?? it['流通股本']),
+      circulating_shares: toNumber(it.floatShares ?? it.float_shares ?? it.circulating_shares ?? it.float_capital ?? it.float_cap ?? it['流通股本']),
       price: toNumber(it.price),
     }));
     console.info("[stocks] items length:", cleaned.length);

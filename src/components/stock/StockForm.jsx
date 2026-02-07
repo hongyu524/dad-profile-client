@@ -66,39 +66,46 @@ export default function StockForm({ stock, defaultYear, onSubmit, onCancel, exis
     yanglao_current: ''
   });
 
+  const toNum = (v) => {
+    if (v === '' || v === undefined || v === null) return 0;
+    const n = parseFloat(String(v).replace(/,/g, ''));
+    return Number.isFinite(n) ? n : 0;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const submitData = {
       ...formData,
       year: formData.year ? parseInt(formData.year) : currentYear,
-      total_shares: formData.total_shares ? parseFloat(formData.total_shares) : 0,
-      circulating_shares: formData.circulating_shares ? parseFloat(formData.circulating_shares) : 0,
-      restricted_shares: formData.restricted_shares ? parseFloat(formData.restricted_shares) : 0,
-      profit: formData.profit ? parseFloat(formData.profit) : 0,
-      beishang_new: formData.beishang_new ? parseFloat(formData.beishang_new) : 0,
-      beishang_increase: formData.beishang_increase ? parseFloat(formData.beishang_increase) : 0,
-      beishang_decrease: formData.beishang_decrease ? parseFloat(formData.beishang_decrease) : 0,
-      beishang_current: formData.beishang_current ? parseFloat(formData.beishang_current) : 0,
-      gongmu_new: formData.gongmu_new ? parseFloat(formData.gongmu_new) : 0,
-      gongmu_increase: formData.gongmu_increase ? parseFloat(formData.gongmu_increase) : 0,
-      gongmu_decrease: formData.gongmu_decrease ? parseFloat(formData.gongmu_decrease) : 0,
-      gongmu_current: formData.gongmu_current ? parseFloat(formData.gongmu_current) : 0,
-      waizi_new: formData.waizi_new ? parseFloat(formData.waizi_new) : 0,
-      waizi_increase: formData.waizi_increase ? parseFloat(formData.waizi_increase) : 0,
-      waizi_decrease: formData.waizi_decrease ? parseFloat(formData.waizi_decrease) : 0,
-      waizi_current: formData.waizi_current ? parseFloat(formData.waizi_current) : 0,
-      simu_new: formData.simu_new ? parseFloat(formData.simu_new) : 0,
-      simu_increase: formData.simu_increase ? parseFloat(formData.simu_increase) : 0,
-      simu_decrease: formData.simu_decrease ? parseFloat(formData.simu_decrease) : 0,
-      simu_current: formData.simu_current ? parseFloat(formData.simu_current) : 0,
-      shebao_new: formData.shebao_new ? parseFloat(formData.shebao_new) : 0,
-      shebao_increase: formData.shebao_increase ? parseFloat(formData.shebao_increase) : 0,
-      shebao_decrease: formData.shebao_decrease ? parseFloat(formData.shebao_decrease) : 0,
-      shebao_current: formData.shebao_current ? parseFloat(formData.shebao_current) : 0,
-      yanglao_new: formData.yanglao_new ? parseFloat(formData.yanglao_new) : 0,
-      yanglao_increase: formData.yanglao_increase ? parseFloat(formData.yanglao_increase) : 0,
-      yanglao_decrease: formData.yanglao_decrease ? parseFloat(formData.yanglao_decrease) : 0,
-      yanglao_current: formData.yanglao_current ? parseFloat(formData.yanglao_current) : 0,
+      total_shares: toNum(formData.total_shares),
+      circulating_shares: toNum(formData.circulating_shares),
+      restricted_shares: toNum(formData.restricted_shares),
+      profit: toNum(formData.profit),
+      floatShares: toNum(formData.circulating_shares),
+      beishang_new: toNum(formData.beishang_new),
+      beishang_increase: toNum(formData.beishang_increase),
+      beishang_decrease: toNum(formData.beishang_decrease),
+      beishang_current: toNum(formData.beishang_current),
+      gongmu_new: toNum(formData.gongmu_new),
+      gongmu_increase: toNum(formData.gongmu_increase),
+      gongmu_decrease: toNum(formData.gongmu_decrease),
+      gongmu_current: toNum(formData.gongmu_current),
+      waizi_new: toNum(formData.waizi_new),
+      waizi_increase: toNum(formData.waizi_increase),
+      waizi_decrease: toNum(formData.waizi_decrease),
+      waizi_current: toNum(formData.waizi_current),
+      simu_new: toNum(formData.simu_new),
+      simu_increase: toNum(formData.simu_increase),
+      simu_decrease: toNum(formData.simu_decrease),
+      simu_current: toNum(formData.simu_current),
+      shebao_new: toNum(formData.shebao_new),
+      shebao_increase: toNum(formData.shebao_increase),
+      shebao_decrease: toNum(formData.shebao_decrease),
+      shebao_current: toNum(formData.shebao_current),
+      yanglao_new: toNum(formData.yanglao_new),
+      yanglao_increase: toNum(formData.yanglao_increase),
+      yanglao_decrease: toNum(formData.yanglao_decrease),
+      yanglao_current: toNum(formData.yanglao_current),
     };
     onSubmit(submitData);
   };

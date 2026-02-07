@@ -19,7 +19,8 @@ const jsonResponse = (statusCode, body) => ({
 
 export const handler = async (event) => {
   try {
-    const { path = '', httpMethod } = event;
+    const path = event?.rawPath || event?.path || '';
+    const httpMethod = event?.requestContext?.http?.method || event?.httpMethod;
     console.log('request', { path, httpMethod });
     if (path === '/health' && httpMethod === 'GET') return jsonResponse(200, { ok: true });
     // stocks

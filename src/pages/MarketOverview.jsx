@@ -153,18 +153,12 @@ export default function MarketOverview() {
 
     const totalMarketCap = stocks.reduce((sum, s) => sum + cleanNum(s.totalShares ?? s.total_shares ?? s.totalSharesCn), 0);
     const circulatingShares = stocks.reduce((sum, s) => sum + cleanNum(s.floatShares ?? s.circulating_shares ?? s.floatSharesCn), 0);
-    const marketValue = stocks.reduce((sum, s) => {
-      const price = cleanNum(s.price);
-      const float = cleanNum(s.floatShares ?? s.circulating_shares ?? s.floatSharesCn);
-      return sum + price * float;
-    }, 0);
 
     return {
       totalStocks,
       industries,
       totalMarketCap,
       circulatingShares,
-      marketValue,
     };
   }, [stocks]);
 
@@ -276,7 +270,7 @@ export default function MarketOverview() {
 
       {/* 市场统计卡片 */}
       {marketStats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 border-emerald-500/30">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -333,19 +327,6 @@ export default function MarketOverview() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-teal-500/10 to-teal-600/10 border-teal-500/30">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-400 mb-1">市值 (价格*流通股)</p>
-                  <p className="text-3xl font-bold text-white">{formatNumber(marketStats.marketValue)}</p>
-                </div>
-                <div className="w-12 h-12 bg-teal-500/20 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-teal-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       )}
 
