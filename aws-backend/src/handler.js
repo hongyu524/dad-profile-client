@@ -5,10 +5,11 @@ import { aiInvoke } from './routes/ai.js';
 
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://zhoutianming.store';
 const RESPONSE_HEADERS = {
-  'Content-Type': 'application/json',
+  'Content-Type': 'application/json; charset=utf-8',
   'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
-  'Access-Control-Allow-Headers': 'Content-Type,Authorization,x-family-code',
-  'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+  'Access-Control-Allow-Headers': 'content-type, authorization, x-api-key, x-family-code',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 };
 
 const jsonResponse = (statusCode, body) => ({
