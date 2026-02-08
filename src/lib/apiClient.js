@@ -80,7 +80,9 @@ export const apiClient = {
   },
   post: async (path, body) => {
     await ensureConfig();
-    return handleResponse(await fetch(buildUrl(path), { method: "POST", headers: jsonHeaders, body: JSON.stringify(body ?? {}) }));
+    const url = buildUrl(path);
+    if (path.includes("/ai/invoke")) console.log("AI invoke URL:", url);
+    return handleResponse(await fetch(url, { method: "POST", headers: jsonHeaders, body: JSON.stringify(body ?? {}) }));
   },
   put: async (path, body) => {
     await ensureConfig();
