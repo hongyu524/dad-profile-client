@@ -1,6 +1,16 @@
-#env
+# Secrets & keys
+key.json
+*.key
+*.pem
+*.p12
+
+# Environment variables
 .env
 .env.*
+.env*
+
+# AWS SST build folder
+aws-backend/.sst/
 
 # Logs
 logs
@@ -11,12 +21,13 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies & builds
 node_modules
 dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# Editor files
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -26,5 +37,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-.env
