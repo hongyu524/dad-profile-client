@@ -8,7 +8,17 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import IndustryManager from '../components/industry/IndustryManager';
 import { apiClient, getApiClientDiagnostics } from '@/lib/apiClient';
-import { cleanNum, normalizeIndustry, isValidLabel } from '@/lib/normalize';
+import { cleanNum, normalizeIndustry } from '@/lib/normalize';
+
+const getIndustry = (item) => {
+  const raw =
+    item.industry ||
+    item.industry_level1 ||
+    item.industry_level2 ||
+    item.industry_level3 ||
+    item.industry_74;
+  return normalizeIndustry(raw);
+};
 
 export default function MarketOverview() {
   const navigate = useNavigate();
@@ -142,14 +152,10 @@ export default function MarketOverview() {
   // 计算市场统计数据
   const marketStats = React.useMemo(() => {
     if (!stocks.length) return null;
-    
+
     const totalStocks = stocks.length;
-    const industryLabels = stocks
-      .map(s => normalizeIndustry(s.industry_level1 ?? s.industry_74))
-      .filter(isValidLabel);
-    const industryCount = new Set(industryLabels).size;
-    const hasUncategorized = stocks.some(s => !isValidLabel(s.industry_level1 ?? s.industry_74));
-    const industries = industryCount + (hasUncategorized ? 1 : 0);
+    const industryLabels = stocks.map(s => getIndustry(s));
+    const industries = new Set(industryLabels).size;
 
     const totalMarketCap = stocks.reduce((sum, s) => sum + cleanNum(s.totalShares ?? s.total_shares ?? s.totalSharesCn), 0);
     const circulatingShares = stocks.reduce((sum, s) => sum + cleanNum(s.floatShares ?? s.circulating_shares ?? s.floatSharesCn), 0);
@@ -165,18 +171,17 @@ export default function MarketOverview() {
   // 行业统计 - 所有行业
   const industryStats = React.useMemo(() => {
     if (!stocks.length) return [];
-    
+
     const stats = {};
     stocks.forEach(stock => {
-      const label = normalizeIndustry(stock.industry_level1 ?? stock.industry_74);
-      const industry = isValidLabel(label) ? label : '未分类';
+      const industry = getIndustry(stock);
       if (!stats[industry]) {
         stats[industry] = { count: 0, totalShares: 0 };
       }
       stats[industry].count++;
       stats[industry].totalShares += cleanNum(stock.totalShares ?? stock.total_shares ?? stock.totalSharesCn);
     });
-    
+
     return Object.entries(stats)
       .map(([industry, data]) => ({ industry, ...data }))
       .sort((a, b) => b.count - a.count);
@@ -359,7 +364,7 @@ export default function MarketOverview() {
       <IndustryManager
         open={showIndustryManager}
         onClose={() => setShowIndustryManager(false)}
-        industries={stocks.map(s => s.industry_74).filter(Boolean)}
+        industries={[...new Set(stocks.map(s => getIndustry(s)))]}
         onRefresh={() => fetchStocks()}
       />
     </div>
